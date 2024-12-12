@@ -124,16 +124,16 @@ app.post("/api/v1/signin", async (req, res) => {
 app.get(`/api/v1/getweatherdetails`, async (req, res) => {
   try {
     const { city, username } = req.query;
-    if(!city || !username){
-        res.status(400).json({
-            msg:"city and username are required"
-        })
-        return;
+    if (!city || !username) {
+      res.status(400).json({
+        msg: "city and username are required",
+      });
+      return;
     }
-    const userQuery = `SELECT id FROM users WHERE username=$1 `
-    const user = await client.query(userQuery,[username]);
-    if(user.rows.length===0){
-        throw new Error("no user found");
+    const userQuery = `SELECT id FROM users WHERE username=$1 `;
+    const user = await client.query(userQuery, [username]);
+    if (user.rows.length === 0) {
+      throw new Error("no user found");
     }
     const userId = user.rows[0].id;
     const resp = await axios.get(
@@ -143,11 +143,11 @@ app.get(`/api/v1/getweatherdetails`, async (req, res) => {
     const query = `
     INSERT INTO search_history(user_id, city, weather_result)
     VALUES($1, $2, $3)
-    `
+    `;
 
-    await client.query(query,[userId, city, weatherData])
+    await client.query(query, [userId, city, weatherData]);
     res.status(200).json({
-        msg:"weather details fetched successfully",
+      msg: "weather details fetched successfully",
       data: weatherData,
     });
   } catch (error) {
@@ -159,24 +159,25 @@ app.get(`/api/v1/getweatherdetails`, async (req, res) => {
 });
 
 app.get("/api/v1/validate-token", async (req, res) => {
-    try {
-      const token = req.headers.authorization?.split(" ")[1]; 
-  
-      if (!token) {
-         res.status(401).json({ msg: "No token provided" });
-         return;
-      }
-  
-      const decoded = jwt.verify(token, jwt_secret);
-      res.status(200).json({ msg: "Token is valid", decoded });
-    } catch (error) {
-      res.status(401).json({ msg: "Invalid token", error});
-    }
-  });
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
 
-  app.get("/api/v1/get-users-search-history", async (req, res) => {
-    try {
-      const historyQuery = `
+    if (!token) {
+      res.status(401).json({ msg: "No token provided" });
+      return;
+    }
+
+    const decoded = jwt.verify(token, jwt_secret);
+    res.status(200).json({ msg: "Token is valid", decoded });
+  } catch (error) {
+    res.status(401).json({ msg: "Invalid token", error });
+  }
+});
+
+app.get("/api/v1/get-users-search-history", async (req, res) => {
+  try {
+    const {username} = req.query
+    const historyQuery = `
         SELECT 
   u.username, 
   sh.city, 
@@ -188,21 +189,22 @@ INNER JOIN
   users u 
 ON 
   sh.user_id = u.id
+  WHERE 
+  u.username = $1
 ORDER BY 
   sh.search_time DESC
 
       `;
-  
-      const historyResult = await client.query(historyQuery);
-  
-      res.status(200).json({ history: historyResult.rows });
-    } catch (error) {
-      console.error("Error fetching search history for all users:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  });
-  
+    console.log("username: ", username);
+    const historyResult = await client.query(historyQuery, [username]);
+
+    res.status(200).json({ history: historyResult.rows });
+  } catch (error) {
+    console.error("Error fetching search history for all users:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 app.listen(port, () => {
   console.log(`app is listening on port ${port}`);
 });
-
