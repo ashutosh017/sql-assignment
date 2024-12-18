@@ -201,7 +201,7 @@ const App2 = () => {
       <h2 className="text-2xl font-bold mt-6">Global Search History</h2>
 
       <div className="mt-4">
-        {searchHistory.map((val, ind) => (
+        {searchHistory && searchHistory.map((val, ind) => (
           <div
             className="flex flex-col items-center space-y-2 sm:justify-around sm:items-baseline sm:flex-row  rounded-md py-2 bg-gray-900 text-gray-200 my-1"
             key={ind}
